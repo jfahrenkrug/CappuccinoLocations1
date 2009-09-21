@@ -24,12 +24,13 @@
     return self ;
 }
 
-- (void)updateLocationLabel:(id)aLatLng {
-    [coordinatesLabel setStringValue:aLatLng.lat() + "/" + aLatLng.lng()];
+- (void)updateLocationLabel:(MKLocation)aLocation {
+    [coordinatesLabel setStringValue:[aLocation latitude] + "/" + [aLocation longitude]];
 }
 
 - (void)moveMapToAddress:(CPString)address {
-    var geocoder = new GClientGeocoder();
+    var gm = [MKMapView gmNamespace];
+    var geocoder = new gm.ClientGeocoder();
 
     geocoder.getLatLng(
         address,
@@ -37,24 +38,23 @@
           if (!point) {
             alert(address + " could not be found.");
           } else {
-            [self moveMapToLocation:point];
+            [self moveMapToLocation:[[MKLocation alloc] initWithLatLng:point]];
           }
         }
     );
 }
 
-- (void)moveMapToLocation:(id)aLatLng {
-    var map = [mapView gMap];
-    
+- (void)moveMapToLocation:(MKLocation)aLocation {    
     //always clear all map overlays...
-    map.clearOverlays();
+    [mapView clearOverlays];
+    [mapView setCenter:aLocation];
+    [mapView setZoom:7];
     
-    map.setCenter(aLatLng, 7);
-    var marker = new GMarker(aLatLng);
-    map.addOverlay(marker);
-    [self updateLocationLabel:aLatLng];
-    latitude = aLatLng.lat();
-    longitude = aLatLng.lng();
+    var marker = [[MKMarker alloc] initAtLocation:aLocation];
+    [marker addToMapView:mapView];
+    [self updateLocationLabel:aLocation];
+    latitude = [aLocation latitude];
+    longitude = [aLocation longitude];
     
     if (delegate && [delegate respondsToSelector:@selector(locationDidChangeWithLat:andLng:)]) {
         [delegate locationDidChangeWithLat:latitude andLng:longitude];
@@ -70,7 +70,7 @@
 }
 
 - (void)moveMapToLat:(CPString)aLat andLng:(CPString)aLng {
-    [self moveMapToLocation:GLatLng.fromUrlValue(aLat + "," + aLng)];
+    [self moveMapToLocation:[MKLocation locationWithLatitude:aLat andLongitude:aLng]];
 }
 
 
